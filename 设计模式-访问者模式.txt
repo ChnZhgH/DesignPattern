@@ -1,0 +1,142 @@
+1.访问者模式：表示一个作用于某对象结构中的各元素的操作。它使你可以在不改变各元素
+	的类的前提下定义作用于这些元素的新操作
+2.访问者模式的理解：
+	A.通过一个例子来理解：男人和女人的例子
+		男人成功时，背后多半有一个伟大的女人；
+		女人成功时，背后大多有一个不成功的男人。
+		男人失败时，闷头喝酒，谁也不用劝；
+		女人失败时，眼泪汪汪，谁劝也没用。
+		男人恋爱时，凡事不懂也要装懂；
+		女人恋爱时，遇事懂也装作不懂。
+		现在用面向对象的方式把这几句话输出到控制台。
+	B.分析一下上面的问题：
+	      a.如果是简单面向对象思路，会先写了人的抽象类
+		然后男人和女人作为子类实现，然后男人/女人类中有去if判断现在的行为
+		是成功还是失败还是恋爱，然后给出对应的响应	
+	      b.显然上面的方法，一旦增加男人/女人结婚时，两个类都要改，都要加if
+		想当的不优雅，那会想到解耦，这时候先想到的是可不可以用桥接模式
+		先抽象出一个Person类出来，     然后再抽象出一个Action行为类
+		然后写子类Man和Woman类，    然后写Success和Fail和Amativeness
+		然后Person中应该持有Action的引用，看起来是可行的
+		不过这里会存在一个小问题，就是客户端new一个Man对象，
+		然后调用一次执行对应的Action，得到了前半句
+		然后new一个Woman对象，再执行一次，得到后半句
+		我们想：如果我们每次输出都是一个男人一个女人，是一个固定的数据格式
+		所以我们就新增一个类把这两个操作绑定一下
+		于是有了访问者模式：
+	     c.从上面就知道，访问者模式是针对数据结构稳定的对象的，我们通过代码来讲解
+	C.我们先实现一下访问者模式，然后后面再实现桥接模式实现，对比对比：
+		a.首先写状态抽象类：
+			由于结构很固定了，就男人和女人，所以这里也就直接挂钩了男人女人的方法
+			abstract class Action{
+				public abstract void getManConclusion(Man man);
+				public abstract void getWomanConclusion(Woman woman);
+			}			
+		b.然后写Person类
+			abstract class Person{
+				public abstract void accept(Action action);
+				//用来获得状态对象
+			}
+		c.然后写具体action类：
+			class Success extends Action{
+				public void getManConclusion(Man man){
+					System.out.println(“男人成功时，背后多半有一个伟大的女人”);
+				}
+				public void getWomanConclusion(Woman woman){
+					System.out.println(“女人成功时，背后大多有一个不成功的男人。”);
+				}
+			}
+			class Fail extends Action{ ... }
+			class Amativeness extends Actions{ ... }
+		d.然后写男人和女人类：
+			class Man extends Person{
+				public void accept(Action action){ action.getManConclusion(); }
+			}
+			class Woman extends Person{
+				public void accept(Action action){ action.getWomanConclusion(); }
+			}
+		e.这样写了话，客户端需要创建某个具体Action
+			然后传入Man和Woman，调用它们的accept方法
+			现在把这两个封装起来，
+			Class ObjectStructure{
+				private List<Person> list = new ArrayList<>();
+				public void attach(Person person){ list.add(person); }
+				public void detach(Person person){ list.remove(person); }
+				public void display(Action action){
+					for(Person p : list)
+						p.accept(action);
+				}
+			}
+		f.好啦，最后客户端的代码：
+			Class Demo{
+				public static void main(String[] args){
+					ObjectStructure o = new ObjectStructure();
+					o.Attach(new Man());
+					o.Attach(new Woman());
+					Success s = new Success();
+					o.display(s);
+				}
+			}
+		综上，当我增加具体的Action时，其他代码都不需要改动，直接添加即可
+		但是如果我想添加Person具体类，比如加个中性，对象结构类不需要改动
+		但是Action已经和Person具体类别挂钩，所以Action要改
+		于是导致Action子类都要改，所以说这个模式只适合数据结构稳定的
+
+	D.然后我们用桥接模式实现，桥接模式其实就是少了个对象结构类，不过因为少了这个类
+		所以Person需要持有Action引用，这个叫聚合。
+		a.状态抽象类，这里地方还是没办法，如果只写一个getConclusion方法
+			方法内部没有持有Person引用，无法确认是男人还是女人
+			如果持有Person引用了，那就Person和Action互相持有引用了
+			abstract class Action{
+				public abstract void getManConclusion();
+				public abstract void getWomanConclusion();
+			}
+		b.然后再写Person抽象类，该类持有Action引用
+			abstract class Person{
+				protect Action action; 
+				public Person(Action action){
+					this.action = action;
+				}
+				public abstract getConclusion();
+			}
+		c.然后具体写Action，我们这里写一个作为例子就行
+			class Success extends Action{
+				public void getManConclusion(){
+					Systen.out.println(“男人成功时，背后多半有一个伟大的女人”);
+				}
+				public void getWomanConclusion(){
+					System.out.println(“女人成功时，背后大多有一个不成功的男人。”);
+				}
+			}
+			class Fail extends Action{ ... }
+			class Amativeness extends Actions{ ... }
+		d.然后写男人和女人类：
+			class Man extends Person{
+				public Man(Action action){ super(action); }
+				public void getConclusion(){ action.getManConclusion(); }
+			}
+			class Woman extends Person{
+				public Woman(Action action){ super(action); }
+				public void getConclusion(){ action.getWomanConclusion(); }
+			}
+		e.最后就是客户端啦：
+			Class Demo{
+				public static void main(String[] args){
+					Success s = new Success();
+					Man man = new Man(s);
+					Woman woman = new Woman(s);
+					man.getConclusion();
+					woman.getConclusion();
+				}
+			}	
+		这时候如果想增加一个Fail，只需要增加Fail去继承Action类，无需修改其他类
+		这时候如果想增加一个中性类，和访问者模式一样麻烦了，
+		需要去继承Person，还要在action中加入一个方法，由于action变化了
+		导致所有子类变化，所以这个其实根本没成功的解耦，但是目前还不知道怎么改进
+3.总的来看，我觉得桥接模式和访问者模式在一些问题上的区别不大
+	主要是侧重点不同，桥接模式侧重于抽象与实现的分离
+	访问者模式侧重于添加新功能彼此不相关，
+	比如对于不同用户，添加功能：
+		访问文章  — 这一动作的权限不一样
+		下载资源 —  这一动作的权限不一样
+		添加的每一个方法，都不会对其他方法产生影响 	

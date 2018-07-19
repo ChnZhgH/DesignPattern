@@ -1,0 +1,50 @@
+1.适配器模式：
+	将一个类的接口转换成客户希望的另外一个接口。Adapter模式使得原来由于
+	接口不兼容而不能一起工作的那些类可以一起工作。
+2.适配器模式理解：
+	A.比如我要的数据是A这样格式的，然后某接口实现类能读取出数据，
+		但是是B这样格式的，那这个实现类是能用的，我们中间给它来个适配器
+		把B格式转换成A格式，然后就可以用啦
+	B.生活中的例子：手机接口是要求输入5V的，然后插座接口是输出220V的
+		所以用电源适配器，可以把220V转换成5V的，满足了手机电源接口
+3.适配器模式实现：
+	A.首先是我想要用的满足我要求，但是接口不对的类，就是我要去适配的类
+		public class Voltage220V{  //这是一个具体类，可能实现了电压接口什么的 
+			public int output220V(){
+				int src = 220;
+				System.out.println(“output ” + 	src + “V”);
+				return src;
+			}
+		}		
+	B.然后是我现在自己的接口：
+		public interface Voltage5V{
+			int output5V();
+		}
+	C.现在我想使用上面那个类来产生我要的5V电压，所以我写个适配器实现类：
+		public VoltageAdapter extends Voltage220V implements Voltage5V{
+			@override
+			public int output5V(){
+				int src = output220V();
+				System.out.println(“开始适配电压...”);
+				int dst = src/44;
+				System.out.println(“输出电压为”+dst+“V”);
+				return dst;
+			}
+		}
+	D.具体手机类去使用手机标准接口实现类：
+		public class Mobile{
+			public void charging(Voltage5V v5){
+				if(v5.output5V() == 5)
+					System.out.println(“刚好5V”);
+				else if (v5.output5V() > 5)
+					System.out.println(“超过5V”);
+					
+			}
+		}	
+	E.客户端：
+		public class Demo{
+			public static void main(String[] args){
+				Mobile mobile = new Mobile();
+				mobile.charging(new VoltageAdapter());
+			}
+		}

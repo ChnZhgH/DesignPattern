@@ -1,0 +1,47 @@
+1.单例模式：保证一个类仅有一个实例，并提供一个访问它的全局访问点。
+2.单例饿汉式
+	A.实现：
+		class Singleton{
+			private static Singleton singleton = new Singleton();
+			private Singleton(){}
+			public static Singleton getInstance(){
+				return singleton;
+			}
+		}
+	B.这种方式呢，没有多线程问题，但是占用内存资源
+3.单例懒汉式
+	A.实现：
+		class Singleton{
+			private static volatile Singleton singleton = null;
+			private Singleton(){};
+			public static Singleton getInstance(){
+				if(singleton == null){
+					synchronized(Singleton.class){
+						if(singleton == null)
+							singleton = new Singleton();
+					}
+				}
+				return singleton;
+			}
+		}
+	B.volatile是为了禁止指令重拍序，双重判断是为了解决多线程问题
+	    synchronized加在方法上，无论对象是否创建，都要进行加锁，浪费资源
+	    而且同步的时候，别的想要获得单例的线程只能等待
+4.单例静态内部类
+	A.实现：
+		class Singleton{
+			private static class SingletonHolder{
+				public static Singleton singleton = new Singleton();
+			}
+			private Singleton(){};
+			public static Singleton getInstance(){
+				return SingletonHolder.singleton;
+			}
+		}
+	B.只要不使用这个内部类，JVM不会去加载这个内部类，从而实现了懒加载
+5.单例枚举
+	A.实现：
+		Enum Singleton{
+			singleton;
+		}
+	B.枚举类....具体细节忘了，有时间复习了再来补充

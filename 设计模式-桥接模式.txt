@@ -1,0 +1,101 @@
+1.桥接模式：将抽象模式与它的实现部分分离，使他们都可以独立的变化。
+2.桥接模式的理解：
+	A.桥接模式是合成/聚合复用原则的体现！
+		即：尽量使用合成/聚合，尽量不要使用类继承
+	B.用一个例子来理解：
+		比如现在有两款手机，苹果和华为，
+		它们分别有苹果版消消乐，安卓版消消乐
+		它们还有苹果版通讯录，安卓版通讯录
+		现在要实现它们，并且要运行苹果版本消消乐
+		如果使用类继承来实现，我们可能会想到：
+			首先写苹果手机类，华为手机抽象类，提供一个run方法，运行对应的应用
+				abstract class IPhone{
+					public abstract void run();
+				}
+				abstract class HUAWEI{
+					public abstract void run();
+				}
+			然后写苹果版消消乐，安卓版消消乐
+				class IPhoneXiaoxiaole extends IPhone{
+					public void run(){ System.out.println(“运行IPhone版消消乐”); } 
+				}
+ 				class HUAWEIXiaoxiaole extends HUAWEI{
+					public void run(){ System.out.println(“运行HUAWEI版消消乐”); } 
+				}
+			再写一个苹果版通讯录，安卓版通讯录
+				class IPhoneAddressList extends IPhone{
+					public void run(){ System.out.println(“运行IPhone版通讯录”); } 
+				}
+				class HUAWEIAddressList extends HUAWEI{
+					public void run(){ System.out.println(“运行HUAWEI版通讯录”); } 
+				}		
+			客户端：
+				IPhoneXiaoxiaole game = new IPhoneXiaoxiaole();
+				game.run();
+		观察上面的代码，我们可以看到几个问题：
+		(1)如果父类一旦需要修改，这个体系越大，要修改的类就越多！
+			比如加个stop方法，两个手机牌子类要改，所有子类都要改
+		(2)如果现在要加一个三星牌手机，我们需要写三星手机类，然后再写消消乐子类，
+			再写通讯录子类，可是发现！三星和华为都是安卓，消消乐代码一样的
+			结果发现各种安卓机很多应用实现都一样，但是还不能不写，总不能说
+			拿HUAWEI的消消乐类来用吧，万一华为没了呢
+		(3)如果现在要加一个MP3，还是老问题，两个安卓写出来的一样的，
+			代码再度重复！太不优雅了！
+	C.用桥接模式去解决上面提到的重复度很高的问题：
+		a.上面是按照手机牌子先进行分类，然后每个手机牌子下，又对应用进行分类
+			当然了，也可以用先对应用分类，然后再对牌子分类，但是解决不了问题
+			继承越庞大，修改起来就越麻烦，那既然这样，为什么不把继承体系变小呢
+			手机牌子去继承你手机牌子的，应用去继承你应用的
+			然后我们最后再想办法把这两个东西联系起来，这样耦合性就低了
+			其实这就是桥接模式！
+	D.桥接模式的实现
+		a.手机牌子归手机牌子，应用归应用
+			先写手机应用接口 — 用抽象类也是可以的
+			interface HandsetSoft{
+				void run();
+			}
+			然后写手机牌子抽象类，手机对手机应用通过持有引用关联起来
+			abstract class HandsetBrand{
+				protect HandsetSoft soft; // 由于软件不是品牌的一部分，所以这里是聚合
+				public HandsetBrand(HandsetSoft soft){
+					this.soft = soft;
+				}
+				public abstract operate();
+			}			
+		b.然后开始写各自的具体类,先写个手机牌子的
+			class IPhone extends HandsetBrand{
+				public IPhone(HandsetSoft soft){ super(soft); }
+				public operate(){ soft.run(); }
+			}
+			class HUAWEI extends HandsetBrand{
+				public HUAWEI(HandsetSoft soft){ super(soft); }
+				public operate(){ soft.run(); }
+			}
+		c.然后写具体应用程序类：
+			仔细想想，消消乐安卓的都一样，但是和苹果的不一样呀，
+			可以写一个安卓版消消乐，是安卓都用这个
+			然后写一个苹果版消消乐，是苹果都用这个
+			如果某个安卓的手机和通用安卓版消消乐不一样，就继承了重写
+			class AndroidXXL implements HandsetSoft{
+				void run(){ System.out.println(“安卓版消消乐运行啦！”); }
+			}	
+			class IPhoneXXL implements HandsetSoft{
+				void run(){ System.out.println(“苹果版消消乐运行啦！”); }
+			}
+			class AndroidAddressList implements HandsetSoft{
+				void run(){ System.out.println(“安卓版通讯录运行啦！”); }
+			}
+			class IPhoneAddressList implements HandsetSoft{
+				void run(){ System.out.println(“苹果版通讯录运行啦！”); }
+			}
+		d.客户端：
+			IPhone iPhone = new IPhone( new IPhoneXXL() );
+			iPhone.operate();
+	E.这样子耦合度就低很多啦，
+		a.如果需要增加别的手机品牌就增加好啦
+		b.如果这个手机品牌有什么特别的应用，就补充一下新的应用类
+		c.如果要修改手机中的功能，也只需要修改手机品牌类
+			不要把应用类也改
+		d.如果要加功能，比如MP3功能，那就直接加就好了，加不同的就行，相同的不用加
+		e.上面写的接口很随意了，一般应该还有具体一点的比如消消乐接口呀什么的
+			如果接口需要修改，也只涉及应用类，不设计手机品牌的修改

@@ -1,0 +1,62 @@
+1.状态模式
+	A.当一个对象的内在状态改变时允许改变其行为，这个对象看起来像是改变了其类
+	B.状态模式主要解决的是当控制一个对象状态转换的条件表达式过于复杂时的情况，
+		把状态的判断逻辑移到表示不同状态的一系列类当中。
+2.状态模式的理解：
+	A.状态模式实际上就是为了去解决某个类的某个方法中，
+		存在一堆if...else if... else if... else if... else if... else if...
+		这样一旦其中一部分条件及内容要改了，维护起来很容易出错！
+	B.举个例子来理解一下：
+		比如我0～8点状态为睡觉，8～9点吃早饭，9～12点学设计模式，
+			12～13点吃午饭，13～17点学框架....
+		那现在给一个时间来确定我在做什么，不用if...else if...的形式，于是引入状态模式
+	C.具体实现：
+		上面那个状态有点多，这里实现就简化一下：
+		上午学设计模式(<12点)，中午吃午饭(<13点)，下午学框架(<17点)，
+		傍晚吃晚饭(<18点)，晚上打游戏(<22点)
+		a.我们把每一个if的状态包装成一个类，它们都去继承一个抽象类	
+			class abstract class State{
+				public abstract void doSomething();
+			}
+			class MorningState extends State{
+				public void doSomething(Work w){
+					if(w.hour < 12)  System.out.println(“学设计模式”);
+					else{	w.setState(new NoonState());   w.doSomething(); }
+					//如果不是上午，传个中午给我的工作安排，
+					//然后在我的工作安排中，根据新的状态，
+					//去调用新的工作的doSomething方法
+					//也就是把切换状态的任务交给了work！
+				}
+			}
+			class NoonState extends State{
+				public void doSomething(Work w){
+					if(w.hour < 13)  System.out.println(“吃午饭”);
+					else{	w.setState(new AfternoonState());   w.doSomething(); }
+				}
+			}
+			class AfternoonState extends State{...}
+			class dinnerState extends State{...}
+			class EveningState extends State{...}
+		b.然后写work类，work类类似策略模式中的Context，它负责状态的切换！
+			class Work{
+				private State current;
+				private double hour;
+				public Work(){ current = new MorningState(); }
+				public void setHour(double hour){ this.hour = hour; }
+				public double getHour(){ return hour; }
+				public void setState(State s){ current = s; }
+				public void doSomething(){ current.doSomething(this); }
+			}	
+		c.最后客户端：
+			class Demo{
+				public static void main(String[] args){
+					Word w = new Word();
+					w.setHour = 15;
+					w.doSomething(); // 下午咯，输出学框架
+				}
+			}
+	D.使用状态模式，比如当我要修改15点～22点的安排，中间多了好几个状态
+		这时候我只修改一下下午类的时间，以及设置其跳转到我新写的状态类就好
+		然后自然就是把要新的状态都写了，这样旧的那些状态类就不用动啦，
+		说不准以后还能复用呢
+	E.不过还是违背了开闭原则，修改了一个状态类！

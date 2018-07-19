@@ -1,0 +1,116 @@
+1.组合模式：
+	将对象组合成树形结构以表示“部分-整体”的层次结构。组合模式使得用户对单个
+	对象和组合对象的使用具有一致性。
+2.组合模式的理解：
+	A.举个例子来理解：
+		a.比如某个公司设置有两部门，人力资源资源部和财务部
+		   我们为其开发一套办公管理系统，现在公司开了子公司
+		   现在公司开了俩子公司，现在的公司设为总公司
+		   子公司部门还是和总公司相同的结构，有两个部门，问题来了：
+			怎么把总公司的系统套用到子公司上，
+			而且到时候再增加子公司还能继续套用
+		b.上面的问题其实就是说，要形成一套树形结构，总公司是根，
+			然后总公司的子节点就是子公司
+		c.那这种树形结构，不就和单词查找树很相似吗？
+			公司类里边开个数组，有子公司了话，就往里塞，然后从根可以一路往下遍历
+			无论是总公司还是子公司都可以有这样的结构
+		d.在这个例子中，我们把部门也作为公司也放到数组里边，让分公司=一部门
+			但是部门不应该具备增加和删除子公司的操作，
+			其实这里不是很好，因为毕竟部门强行继承了自己没有的功能
+	B.组合模式的实现：
+		a.首先要把各个类写了，因为公司和部门要存在同一个list里边，所以抽象出来
+			abstract class Company{
+				protected String name;
+				public Company(String name){ this.name = name; }
+
+				public abstract void add(Company c);
+				public abstract void remove(Company c); // 添加删除子公司
+				public abstract void display(int depth);
+				public abstract void lineOfDuty(); //履行职责
+				//履行职责实际上是只有部门有的功能，公司做的只是递推传递而已
+			}	
+		b.然后写具体公司类和部门类，无论是子公司还是总公司都是这个类：
+			class ConcreteCompany extends Company{
+				private List<Company> children = new ArrayList<>();
+				public ConcreteCompany(String name){ super(name); }
+				public void add(Company c) { children.add(c); }
+				public void remove(Company c) { children.remove(c); }		
+				public void display(int depth){
+					System.out.println(new String(“-”,depth) + name);
+					for(Company cp : children)
+						cp.display(depth+2);
+				}
+				public void lineOfDuty(){
+					for(Company c : children) 
+						c.lineOfDuty();
+				}
+			}
+			//人力资源部
+			class HRDepartment extends Company{
+				public HRDepartment(String name){ super(name); }
+				public void add(Company c){}
+				public void remove(Company c){}
+				public void display(int depth)}{
+					System.out.println(new String(“-”,depth) + name); 
+				}
+				public void lineOfDuty(){
+					System.out.println(name + “员工招聘培训管理”);
+				}
+			}
+			//财务部
+			class FinanceDepartment extends Company{
+				public FinanceDepartment(String name){ super(name); }
+				public void add(Company c){}
+				public void remove(Company c){}
+				public void display(int depth)}{
+					System.out.println(new String(“-”,depth) + name); 
+				}
+				public void lineOfDuty(){
+					System.out.println(name + “公司财务收支管理”);
+				}
+			}
+		c.客户端实现：
+			class Demo{
+				public static void main(String[] args){
+					ConcreteCompany root = new ConcreteCompany(“北京总公司”);
+					root.add(new HRDepartment(“北京人力资源部”));
+					root.add(new FinanceDepartment(“北京财务部”));
+					
+					Company comp1 = new ConcreteCompany(“上海分公司”);
+					comp1.add(new HRDepartment(“上海人力资源部”));
+					comp1.add(new FinanceDepartment(“上海财务部”));
+
+					Company comp2 = new ConcreteCompany(“南京办事处”);
+					comp2.add(new HRDepartment(“南京人力资源部”));
+					comp2.add(new FinanceDepartment(“南京财务部”));
+
+					root.add(comp1);
+					comp1.add(comp2);
+					
+					System.out.println(“结构图： ”);
+					root.display(1);
+					System.out.println(“履行职责： ”);
+					root.lineOfDuty();
+				}
+			}
+		d.输出结果：
+			结构图：
+			-北京总公司
+			- - - 北京人力资源部
+			- - - 北京财务部
+			- - - 上海分公司
+			- - - - - 上海人力资源部
+			- - - - - 上海财务部
+			- - - - - 南京办事处
+			- - - - - - - 南京人力资源部
+			- - - - - - - 南京财务部
+			履行职责：
+			北京总公司员工招聘培训管理
+			北京总公司财务收支管理
+			上海分公司员工招聘培训管理
+			上海分公司财务收支管理
+			南京办事处员工招聘培训管理
+			南京办事处财务收支管理
+
+
+

@@ -1,0 +1,71 @@
+1.中介者模式：
+	用一个中介对象来封装一系列对象交互。中介者对象使各对象不需要显式地相互引用
+	从而使其耦合松散，而且可以独自地改变它们之间的交互
+2.中介者模式的理解：
+	A.用一个例子来理解：
+		中介模式就像联合国和各个国家的关系，各个国家没有直接关系
+		通过联合国进行交流，这样各个国家各自的改变和别的国家就互不影响
+		并且每个国家只需要持有一个联合国引用，就可以通过联合国提供的交流功能
+	B.具体实现一下例子：联合国的安理会实现美国和伊拉克对话
+		首先写一个中介—联合国的抽象类：
+			abstract class UniteNations{
+				public abstract void declare(String message,  Country country);
+			}
+		然后我们先把国家类写了，因为安理会应该具体持有各个国家才行
+			abstract class Country{
+				protected UniteNations mediator;
+				public Country(UniteNations mediator){
+					this.mediator = mediator;
+				}
+			}
+		接着写具体国家类：
+			class USA extends Country {
+				public USA(UniteNations mediator){ super(mediator); }
+				public void declare(String message){ mediator.declare(); }
+				public void getMessage(String message){ 
+					System.out.print(“美国收到对方的信息：” + message);
+				}
+			}
+			class Iraq extends Country {
+				public Iraq(UniteNations mediator){ super(mediator); }
+				public void declare(String message){ mediator.declare(); }
+				public void getMessage(String message){ 
+					System.out.print(“伊拉克收到对方的信息：” + message);
+				}
+			}
+		然后就可以开始写安理会啦：
+			class UniteNationsSecurityConcil extends UniteNations{
+				private USA country1;
+				private Iraq country2;
+				{ set function }
+				public void declare(String message, Country country){
+					if(country == country1)
+						country2.getMessage(message);
+					else
+						country1.getMessage(message);
+				}
+			}
+		客户端实现：
+			class Demo{
+				public static void main(String[] args){
+					UniteNationsSecurityConcil UNSC = 
+						new UniteNationsSecurityConcil();
+					USA c1 = new USA(UNSC);
+					Iraq c2 = new Iraq(UNSC);
+					UNSC.setUSA(c1);
+					UNSC.setIraq(c2);
+					
+					c1.declare(“不准使用核武器”);
+					c2.declare(“我没用我没用，你打我，我是会还手的哦”);
+
+				}
+			}
+3.中介者模式的优劣势：
+	A.从上面的实现，我们可以看到，各个类的耦合是变送了，	但是中介类的承担的内容
+		就过多了，增加了中介的复杂性，一旦这个类出现问题，会影响所有类
+	B.但是中介者能让我们站一个宏观的角度去看待系统
+4.中介者模式的应用：
+	比如电脑的计算器，比如按钮的Button控件，和显示数字的TextBox控件
+	如果正常写，按钮类就必然要持有TextBox才行，然后实现显示
+	但是使用中介者模式，按钮就负责按，并且发出按的信息，交给中介
+	TextBox就负责接收并且处理显示就好了

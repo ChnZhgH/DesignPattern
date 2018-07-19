@@ -1,0 +1,74 @@
+1.面向对象编程的三大特性：封装，继承，多态
+2.面对对象编程的好处：
+   我们根据一个具体的例子来详述什么样才叫面向对象编程
+   要求：
+	请用任意一种面向对象语言实现一个计算器控制台程序，
+	要求输入两个数字和一个运算符，得到结果。
+
+	A.跟面向过程来比较：
+	    	面向过程好比刻板印刷，面向对象好比活字印刷
+		如果我是面向过程去编程，当用户要求更改的时候，我可能需要修改整个程序
+		可复用型差，可扩展性差，灵活性低，可维护性差
+		
+		那上面题目做例子：
+			面向过程了话，会这么写：
+		class Program{
+			public static void main(String[] args){
+				Scanner in = new Scanner(System.in);
+				//这么写应该是不对的，这里暂时不管，因为换行会占用一次输入
+				String numberA = in.nextLine();
+				String operate = in.nextLine();
+				String numberB = in.nextLine();
+				String result;
+				switch(operate){
+				case “+”: result = String(Decimal(numberA) + Decimal(numberB));  break;
+				case “-”: result = String(Decimal(numberA) - Decimal(numberB));  break;
+				case “*”: result = String(Decimal(numberA) * Decimal(numberB));  break;
+				case “/”: result = String(Decimal(numberA) / Decimal(numberB));  break;
+				}		
+			}
+		}
+		上面的程序存在两个问题：
+			1.这不叫面向对象编程，加入现在我需要给这个计算器增加一个开根，
+			    那么需要重新修改这段代码，但是比如老板让你增加一个临时工的工资分配
+			    难道要把全部代码给你？中途要是你修改了其他代码怎么办？
+			    所以这里就要用上面向对象第一个特点，封装，把加减乘除写成各自的类
+			    加减乘除都继承于运算，那么实现一个operation类，让具体运算去继承
+			2.第二个问题，没考虑除0等情况
+		
+	B.那么从A中我们改进以后，应该得到如下程序：
+		class Operation{
+			double numberA = 0;
+			double numberB = 0;
+			{get/set function...}
+			public double getResult(){
+				System.out.println(“待重写的方法”);
+			}
+		}
+		class OperationAdd{重写getResult方法}
+		class OperationSub{重写getResult方法}
+		class OperationMul{重写getResult方法}
+		class OperationDiv{重写getResult方法}
+	C.接下来就要解决如何去调用这些方法了，这里我们就引入了简单工厂模式（多态）
+		public class OperationFactory{
+			public static Operation creatOperate(String operate){
+				Operation operation = null;
+				switch(operate){
+					case “+”: operation = new OperationAdd(); break;
+					case “-”:  operation = new OperationSub(); break;
+					case “*”:  operation = new OperationMul(); break;
+					case “/”:  operation = new OperationDiv(); break;					
+				}	
+				return operation;
+			}
+		}		
+		简单工厂其实并不怎么使用，加入我需要增加开根，就要修改工厂类了，不好
+	D.那么客户端调用：
+		Operation operation;
+		operation = OperationFactory.creatOperation(“+”);
+		operation.setNumberA = 1;
+		operation.setNumberB = 2;
+		double result = operation.getResult();
+
+3.通过上面的改进，这样的运算类的复用性就很高了，web可以用，windows计算器也可以用等等
+4.通过以上可以发现，这么一段代码，用到面向对象的三大特性：封装，继承，多态
