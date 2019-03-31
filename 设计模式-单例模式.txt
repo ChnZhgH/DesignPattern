@@ -41,7 +41,7 @@
 	B.只要不使用这个内部类，JVM不会去加载这个内部类，从而实现了懒加载
 5.单例枚举
 	A.实现：
-		Enum Singleton{
+		public enum Singleton{
 			singleton;
 		}
 	B.枚举类....具体细节忘了，有时间复习了再来补充
