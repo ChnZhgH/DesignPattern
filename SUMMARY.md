@@ -10,5 +10,5 @@
     * [结构型模式](gitbook/StructuralPattern/README.md)
     * [行为型模式](gitbook/BehavioralPattern/README.md)
     
-* [设计模式-txt](txt/README.md)
+* [设计模式-txt](txt/README.md) 
     
