@@ -1,0 +1,39 @@
+//这个也是以前写的，有待更新
+1.对象增强手段：
+	A.继承
+		被增强的对象是固定的
+		增强的内容也是固定的
+	B.装饰者模式
+		被增强的对象是可以切换的
+		增强的内容是固定的
+	C.动态代理
+		被增强的对象是可以切换的：Service
+		增强的内容也是可以切换的：事务处理
+			当我们使用事务的时候，由于我们需要同一个连接Conection，
+			所以是从Service层调用dao层的时候传了一个Connection进去，
+			这样事务层和服务层就交叉了，所以使用动态代理
+		
+2.装饰者模式
+	A.对比继承，典型例子：咖啡类
+		比如现在有3个子类，有糖咖啡，加奶咖啡，加盐咖啡
+		现在要实现一个加糖加奶咖啡，用继承就需要写一个新类，继承加奶，然后自己实现加糖
+		但是这里可以有很多种搭配方式，每一种都写，会使类的数量增多！
+	B.装饰模式
+		思路：是你还有你，一切拜托你
+		class MyConnection implements Connection{//是你
+			private Connection con; //还有你
+			
+			public MyConnection(Connection con){
+				this.con = con;
+			}
+			//一切拜托你
+			public Statement createStatement(){
+				return con.createStatement();
+			}
+			//装饰
+			public void close(){
+				System.out.println("hahaha");
+				con.close;
+			}
+		
+		}

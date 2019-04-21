@@ -1,0 +1,70 @@
+1.建造者模式：将一个复杂对象的构建与它的表示分离，使得同样的构建可以创建不同的表示
+2.建造者模式理解：
+	A.举个简单的例子理解：
+		a.人是一个复杂的对象，由手，脚，头，身体组成
+		b.现在要构造一个人，常规的想法可以是new一个人，然后set各个部分
+			但是这样可能会落下某些部分忘记set
+			class Person{
+				private Head head;
+				private Body body;
+				private ArmLeft armLeft;
+				private ArmRight armRight;
+				private LegLeft legLeft;
+				private LegRight legRight;
+				{get/set function}
+				{toString function}
+			}
+		c.那么使用建造者模式，人这个类不变，让构造人的动作交给builder类去做
+		d.在建立builder之前，我们还考虑到，每个人手手脚脚都有长有短，每个人都不一样
+			所以builder要只是限定你别忘了构造这些部分，而不规定具体细节
+		e.那么builder类为抽象类：
+			abstract class PersonBuilder{
+				protected Person person ;
+				public PersonBuilder(Person person){
+					this.person = person;
+				}
+				public abstract void buildHead();
+				public abstract void buildBody();
+				public abstract void buildArmLeft();
+				public abstract void buildArmRight();
+				public abstract void buildLegLeft();
+				public abstract void buildLegRight();
+			} 
+		f.在具体的builder类中去决定要怎么构造一个独特的人
+			class PersonThinBuilder extends PersonBuilder{
+				public PersonThinBuilder(Person person){
+					super(person);
+				}
+				@override
+				public void BuildHead(){
+					person.Head = new Head(“big head!”);
+				}
+				......
+			}	
+		e.这样如果客户端去具体builder来构造，还是一样可能漏，
+			所以我们还需要一个指挥者类：
+			class PersonDirector {
+				private PersonBuilder personBuilder;
+				public PersonDirector(PersonBuilder personBuilder){
+					this.personBuilder = personBuilder;
+				}
+				public void createPerson(){
+					personBuilder.buildHead();
+					personBuilder.buildBody();
+					personBuilder.buildArmLeft();
+					personBuilder.buildArmRight();
+					personBuilder.buildLegLeft();
+					personBuilder.buildLegRight();
+				}
+			}
+		f.那么客户端只需要：
+			class Demo{
+				public static void main(String[] args){
+					PersonBuilder pb = new PersonThinBuilder();
+					PersonDirector pd = new PersonDirector(pb);
+					Person person = pd.createPerson();
+					System.out.println(person);
+				}
+			}
+3.通过上面的代码理解，我们可以知道通过建造者模式，客户端看到仅仅只是指挥者
+	而无法看到build的过

@@ -1,0 +1,182 @@
+1.观察者模式：
+	A.观察者模式定义了一种一对多的依赖关系，让多个观察者对象同时监听
+	    某一个主题对象。这个主题对象在状态发生变化时，会通知所有观察者对象，
+	    使他们能够自己更新自己。
+	B.这其实类似于一个状态机，当产生某些特定的变化的时候，通知各个状态机
+	    跳转到新的状态
+2.观察者模式理解(简易初始版，还未加入委托机制)：
+	偷懒的员工听到前台通知老板回来，由各自做的事情转向工作状态
+	A.首先定义观察者，由于每个观察者(员工)偷懒在做的事不一样，
+		所以不根据具体员工去编程，而是定义一个观察者抽象类（后续会改进为接口）
+		abstract class Observer{
+			public abstract void update();
+		}
+	B.然后写具体的观察者，当有不同观察者加入时，只需要多加一个类，开闭原则
+		class ConcreteObserver extends Observer {
+			private String name; // 观察者名字
+			private String observerStatus; // 观察者状态
+			private ConcreteSubject subject; // 具体通知者，也叫主题对象
+				//注意了，这里依赖了具体类，这样写实际上是不好的，
+				//不过后面我们会通过委托去除通知者和观察者这种耦合关系
+				//所以这里暂时不在意了
+			
+			public ConcreteObserver(String name, ConcreteSubject concreteSubject){
+				this.name = name;
+				this.subject = concreteSubject;
+			}
+
+			@override
+			public void update(){
+				this.observerStatus = subject.subjectStatus;
+				System.out.println(“观察者” + name + “的新状态是” + observerStatus);				
+			}
+		} 
+	C.然后我们写通知者，通知者不止一个,比如前台不在老板可能进来了，
+		那就是老板来通知咯，一个写成抽象类/接口：
+		abstract class Subject{
+			private List<Observer> observers = new ArrayList<>();
+
+			public void Attach(Observer observer){
+				observers.add(observer);
+			}	
+
+			public void Detach(Observer observer){
+				observer.remove(observer);
+			}
+
+			public void notify(){ // 这里我们通知都是一样的内容，所以方法就不抽象了
+				for(Observer o : observer)
+					o.update();
+			}
+		}	
+	D.那现在就可以写具体通知者啦
+		class ConcreteSubject extends Subject{
+			private String subjectStatus;
+			{get/set function}
+		}	
+	E.那就写完了，现在写客户端，比如老板来了，然后通知了员工，员工切换到工作状态
+		class Demo{
+			ConcreteSubject s = new ConcreteSubject();
+			s.Attach(new ConcreteObserver(“张三”,s));
+			s.Attach(new ConcreteObserver(“李四”,s));
+			s.subjectStatus(“老板回来了，进入工作状态！”);
+			s.notify();
+		}
+	F.那么输出：
+		观察者张三的新状态是老板回来了，进入工作状态！
+		观察者李四的新状态是老板回来了，进入工作状态！
+3.观察者模式特点：
+	A.从上面的例子可以看到，通知者发现改变，调用notify，
+	    在notify中依次去执行观察者的状态更新
+	B.那么观察者模式的使用场合：
+		当一个对象的改变需要同时改变其他对象的时候，就用观察者模式～
+	C.上面的例子中，我们用的都是抽象类，而一般情况下我们都用接口，为什么呢？
+		a.上面用抽象类是考虑了一下，大家都是员工，无论你做什么事，炒股也好，聊天也好
+			但是还是有很多相似之处的，所以使用了抽象类做抽取
+		b.真正使用的时候，具体的观察者可能一毛钱关系都没有，但是它们都需要实现update
+			方法，所以一般会考虑使用接口
+4.观察者模式委托版：
+	A.从上面的例子可以发现一个巨大的问题：
+		通知者类中持有观察者的引用，观察者类中也持有通知者的引用
+		这样耦合性太高了，会出问题
+	B.通过一个具体的例子来理解：
+		a.当我们使用VS编程的时候，点run点时候，工具栏隐藏了，
+			错误信息列表变成了自动窗口和命令窗口
+			这显然是一个很典型的观察者模式咯，但是这些控件早都被制造商封装了
+			根本没办法让这些控件去实现Observer接口并重写update方法。 
+		b.那现在的情况是：
+			现在压根就没有Observer这个接口了，
+			自然要观察者类中也没有写名为update的方法，
+				（比如：而是名为openwindow的方法）
+			而且观察者类如果制造商没有引用Subject了话，也没有办法认识通知者，
+			不过一般都是会有Subject接口的引用的，这样才能获得通知者传来的信息
+			不过如果不需要信息了话，或者信息是确定的，就没有必要加入这个引用
+		c.而且现在通知者也没有引用Observer，怎么实现通知呢？
+			那当然是要被通知的观察者把它被通知的时候，把要采取的行动(方法)告诉
+			直接我，然后我直接帮你做了(比如通过反射)
+		d.那具体怎么做呢？
+			帮你做了这个动作，用一个表示就是委托，你委托我帮你做了
+			而我代表的就是客户端！也就是观察者委托客户端帮执行
+			在C#中可以通过delegate声明一个委托，
+			产生一个事件处理程序，然后我们只需要把具体观察者中要采取的行动
+			也就是要调用的方法加入事件处理程序列表中
+			然后让通知者的notify方法与事件处理程序挂钩，当我调用notify的时候，
+			就自动去调用对应观察者的方法
+		e.可惜，java中没有delegate，所以我们用反射来实现事件委托！
+	C.用反射具体来实现一个观察者模式的委托版：
+		a.首先写具体观察者：
+			注：这里两个具体的观察者很相似，理论应该抽取父类的，
+				但是实际上观察者可能完全是不相关的，所以这里只是举个例子
+			class StockObserver{ // 看股票的同事
+				private String name;
+				//private Subject sub;  // 如果不需要获得通知者的具体信息，可以不要
+				//写下去发现，这里不能像C#一样，java接口中，
+				//成员变量只能是静态常量，意思就是接口应该是最终的不变的！
+				public StockObserver(String name){
+					this.name = name;
+					//this.sub = sub;  这个参数用不上了
+				}			
+				public void closeStockMarket(){
+					System.out.println(name + “关闭股票行情，继续工作！”);
+				}
+			}
+
+			class NBAObserver{ //看NBA的同事
+				private String name;
+				private Subject sub;
+				public NBAObserver(String name){
+					this.name = name;
+					//this.sub = sub;
+				}
+				public void closeNBADirectSeeding(){
+					System.out.println(name + “关闭NBA直播，继续工作！”);
+				}
+			}
+		b.然后现在写通知者接口以及实现类：
+			interface Subject{
+				void Notify(Object obj);
+			}
+
+			class Boss implements Subject{
+				private Method method;
+				public setMethod(Method method){ this.method = method; }
+				public Boss(Method method){
+					this.method = method;
+				}
+				void Notify(Object obj){
+					if(method != null){
+						System.out.print(“俺回来了，”);
+						try{
+							method.invoke(obj);
+						}catch(NoSuchMethodException e){
+							e.printStackTrace();
+						}catch(SecurityException e){
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+
+			class Secretary implement Subject{
+				...和Boss类一样的
+			}
+		c.这样就完事了，剩下交给客户端！
+			class Demo{
+				public static void main(String[] args){
+					StockObserver observer1 = new stockObserver(“张三”);
+					NBAObserver  observer2 = new NBAObserver(“李四”);
+					Boss boss = new Boss(observer.getclass().getMethod(
+									“closeStockMarket”));
+					boss.Notify(observer1);
+					//输出：俺回来了，张三关闭股票行情，继续工作！
+					
+					boss.setMethod(observer2.getclass().getMethod(
+									“closeNBADirectSeeding”));
+					boss.Notify(observers2);
+					//输出：俺回来了，李四关闭NBA直播，继续工作！
+				}
+			}
+		d.注意：由于Boss中使用了invoke方法，而且没有传入任何参数
+			就是说，要用Boss作为通知者的观察者传递的方法都必须无参的
+			所以：使用反射完成委托和C#一样的，
+			委托的方法们方法名可以不同，但是参数类型和返回值类型必须相同

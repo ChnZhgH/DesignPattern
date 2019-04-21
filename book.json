@@ -1,0 +1,13 @@
+{
+    "plugins":[
+        "theme-comscore",
+        "anchor-navigation-ex",
+        "expandable-chapters",
+        "fontsettings"
+    ],
+    "pluginsConfig": {
+        "anchor-navigation-ex": {
+            "showLevel": false
+        }
+    }
+}

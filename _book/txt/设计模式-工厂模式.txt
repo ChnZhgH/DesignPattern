@@ -1,0 +1,119 @@
+1.简单工厂
+	就是建立一个工厂类，然后用来生成对象的
+	这种适用于只有一个产品对象的，因为一旦增加了对象，
+	就要重新修改工厂类
+	class ComputerFactory{
+		public static Computer createComputer(){
+			return new Computer();	
+		}
+	}
+	
+
+2.抽象工厂模式（包含工厂方法特例讲解）
+	A.提供一个创建一系列相关或相互依赖对象的接口，而无需只能它们具体的类。
+	B.工厂方法模式是抽象工厂模式的一个特例
+	C.工厂方法和抽象工厂的理解：
+	    下面是一个抽象工厂模式，当抽象电脑工厂中只有一个方法时，比如产生CPU
+             这时候，我们把它叫做工厂方法，当我增加新的电脑品牌时，比如戴尔
+	    我只需要实现戴尔电脑工厂，然后写一个戴尔CPU实现类就解决问题
+
+	    举个例子来理解：
+		a.首先我们有一个抽象电脑工厂接口
+			interface ComputerFactory {
+				public CPU createCPU();
+				public RAM createRAM();
+				public ROM createROM();
+			}
+
+		b.然后现在我有两个牌子，比如联想和华硕，那么就要去实现电脑工厂接口
+			class LenovoComputerFactory implements ComputerFactory{
+				public CPU createCPU(){ 
+					return new LenovoCPU();
+				}//注意：CPU是一个接口，无论是哪个牌子的CPU都去实现这个接口
+				public RAM createRAM(){
+					return new LenovoRAM();
+				}
+				public ROM createROM(){
+					return new LenovoROM();
+				}
+			}
+			
+			class ASUSComputerFactory{...}
+		c.然后每个牌子下边都有自己的CPU，ROM，RAM，我们去写它们的接口及实现类
+			interface CPU{
+				//这里是CPU规定的一些规范，比如开启时钟等等
+				void startTimer();
+			}
+			class LenovoCPU implements CPU{
+				void startTimer(){ ... }	
+			}
+			class ASUSCPU implements CPU{
+				void startTimer(){ ... }
+			}
+			剩下的ROM和RAM类似
+		d.这样客户端的写法：
+			class Demo{
+				public static void main(String[] args){
+					//比如要生产一个联想CPU
+					ComputerFactory cf = new LenovoComputerFactory();
+					LenovoCPU Cpu = cf.createCPU();
+				}
+			}
+	D.抽象工厂的优势和不足：
+		a.从上面看出来，当我增加一个品牌的时候，我只需要增加对应的品牌工厂
+			并且把具体产品的实现类写出来就好了，这样是很方便的
+		b.但是也存在着两个巨大的不足：
+			(1)当我要增加具体产品种类时，比如电脑配件多了一个Flash
+				那抽象工厂要改，联想工厂要改，华硕工厂也要改，
+				然后再增加一个Flash实现类，规模越大改得愈多啊
+			(2)当我每次要使用一次联想CPU的时候，总是要new一个联想工厂出来
+				假设我用了100次，那就是写了100次new LenovoComputerFactory()
+				现在好了，公司不用联想CPU了，改用华硕的了
+				这下子要改100个地方的联想工厂，相当不优雅呀
+
+3.用简单工厂+反射改进抽象工厂：
+	A.首先，在使用简单工厂之前，要认识到一件就是，简单工厂是违背开闭原则的
+		当我要增加一个具体配件，比如Flash，简单工厂需要增加createFlash方法
+	B.其次，这种改进是有一个前提，就是只有一个牌子可以投入使用：
+		就是说，如果公司现在用的是联想的，那就都用联想的
+		不能说既用联想又用华硕，这里是一个例子，
+		实际上可能碰上的类似场景应该是：一个公司使用一次只用一种数据库
+			但是公司可能会更换数据库，这时候为了减少DAO层的修改，
+			我们采用这种改进方式
+	C.具体改进操作：
+		a.首先删除联想和华硕具体工厂，删除抽象工厂接口
+		b.改用简单工厂：
+			class DataAccess{
+				private static final String logo = “Lenovo”;
+				public static CPU createCPU(){
+					String classname = “czh.” + logo + “CPU”;
+					Class clazz = Class.forName(classname);
+					return (CPU)clazz.newInstance(); 
+				}
+				public static RAM createRAM(){ //同上  }
+				public static ROM createROM(){...}
+			}	
+		c.这样当我增加Flash只需要增加public static Flash createFlash(){...}	
+			并且写好Flash接口的实现类即可。
+	D.上边的简单工厂中的logo，还是要修改类，不好，改用配置文件来获取！
+4.简单工厂+配置文件+反射改进：
+	写Computer.properties文件，内容logo = Lenovo
+	然后简单工厂改为：
+	class DataAccess{
+		static{  //使用静态代码块，因为多个工厂共享这个logo
+			Properties properties = new Properties()
+			InputStream in = this.class.getClassLoader()
+				.getResourceAsStream(“Computer.properties”));
+			properties.load(in);
+			private static final String logo = properties.getProperty(“logo”);
+		}
+		//private static final String logo = 
+
+		public static CPU createCPU(){
+			String classname = “czh.” + logo + “CPU”;
+			Class clazz = Class.forName(classname);
+			return (CPU)clazz.newInstance(); 
+		}
+		public static RAM createRAM(){ //同上  }
+		public static ROM createROM(){...}
+	}

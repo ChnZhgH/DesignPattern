@@ -1,0 +1,106 @@
+1.职责链模式
+	使多个对象都有机会处理请求，从而避免了请求的发送者和接受者之前的耦合关系。
+	将这些对象连成一条链，并沿着这条链传递该请求，直到有一个对象处理它为止。
+2.职责链模式的理解
+	举个例子来理解：
+		比如在公司提出加薪申请，经过部门经理，部门经理处理不了
+		然后部门经理就提交给总监，总监也处理不了，就递交给总经理
+		就这样链式传递下去	
+3.职责链模式的实现
+	A.链式模式看起来和状态模式很相似，不过我们先不讨论，先实现
+		然后再探讨和状态模式的区别
+	B.首先我们写一个申请类：
+		class Request{
+			private String requestType;
+			private String requestContent;
+			private int number;
+			{get/set function}
+		}
+	C.然后每一个主管都是对我的加薪申请有一个处理权，所以我们提取了一个抽象类
+		呃，个人觉得应该写一个接口，最后我们再讨论。
+		这个主管类里边需要有它的下一个传递对象，还有就是其本类的处理方法
+		abstract class Manager{
+			protected String name;	
+			protected Manager superior;
+			public Manage(String name){ this.name = name;}
+			public void setSuccessor(Manager superior){
+				this.superior = superior;
+			}
+			public abstract void handleRequest(Request request);
+		}
+	C.接着写具体的处理类，也就是各种主管类
+		class CommonManager extends Manager{ //普通经理
+			public CommonManager(String name){ super(name); }
+			public void handleRequest(Request request){
+				if(request.requestType.euqals(“请假”) && 
+					request.request.number <= 2 ){ //请假小于两天可以处理
+					System.out.println(“批准了”);
+				}else{
+					if(superior != null)	
+						superior.handleRequest(request);
+				}
+			}
+		}
+		class Majordomo extends Manager{ //总监
+			public Majordomo(String name){ super(name); }
+			public void handleRequest(Request request){
+				if(request.requestType.euqals(“请假”) && 
+					request.request.number <= 5 ){ //请假小于5天可以处理
+					System.out.println(“批准了”);
+				}else{
+					if(superior != null)	
+						superior.handleRequest(request);
+				}
+			}
+		}
+		class GeneralManager extends Manager{ //总经理
+			public GeneralManager(String name){ super(name); }
+			public void handleRequest(Request request){
+				if(request.requestType.euqals(“请假”) ){ //请假小于5天可以处理
+					System.out.println(“批准了”);
+				}else{
+					if(superior != null)	
+						superior.handleRequest(request);
+				}
+			}
+		}
+	D.客户端实现：
+		class Demo{
+			public static void main(String[] args){
+				CommonManager cm = new CommonManager();
+				Majordomo m = new Majordomo();
+				GeneralManager gm = new GeneralManager();
+				cm.setSuperior(m);
+				m.setSuperior(gm);
+				
+				Request q = new Request();
+				q.setRequestType(“请假”);
+				q.setRequestContent(“因为肚子痛”);
+				q.setNumber(4);
+
+				cm.handleRequest(q);
+			}
+		}
+
+4.职责链模式和状态模式的区别
+	从上面看，职责链模式和状态模式很像，都是链式结构
+	但是还是不少区别的：
+		A.状态模式的子类只负责改变其拥有类的状态属性，而不负责去执行下一个状态
+			的方法，执行还需要通过其他类去调用下一个状态子类的方法
+		    而职责链模式的每一个管理者既负责处理问题也负责请求的传递
+		B.职责链模式中，接受者和发送者都没有对方的明确信息，且链中的对象也不知道
+			链的结构，它们只需保证一只指向后继者的引用，且职责链中的后继者最终
+			都是由客户端决定的，所以链接点的耦合性低，重新调整链的状态更简单		
+		C.状态模式的子状态实际上是从一个类中独立出去的，因此其整体功能是一个完整类
+			的功能，我们只不过是把这个类对不同情况的响应行为独立成状态子类罢了
+		    而职责链模式中，是不同的类对一个问题的反应，职责链中的这些类不属于一个
+			整体，它们各司其职，只不过把它们凑在一起变成链式处理问题罢了
+5.对于上边接口和抽象类问题的讨论：
+	A.首先我觉得职责链模式中的各个主管，这种链式处理请求的方式，可能并不是天生存在的
+		所以我觉得可以写成接口的形式，也就是
+		interface HandleRequest{
+			void handleRequest(Request request);
+		}
+	B.但是这里缺少一个继任者的set，在Manager中实现，因为每个职位都应该有他的领导
+	C.不过呢，其实写抽象类中也没有多大问题，但是还是尽量少用继承，
+		不然万一基类一动，要修改就很麻烦啦	
