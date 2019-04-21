@@ -1,0 +1,104 @@
+1.命令模式：
+	A.将一个请求封装为一个对象，从而使你可用不同的请求对客户进行参数化；
+		对请求排队或记录请求日志，以及支持可撤销对操作。
+	B.命令模式是对请求者和执行者的解耦
+2.命令模式的理解：
+	A.通过一个例子来理解：
+	     a.路边的烧烤：客人来了，找烧烤的人点烧烤
+		那么实现一下：
+		class Barbecuer{
+			public void bakeMutton(){	System.out.print(“烤了串羊肉～”);		}
+			public void bakeChickenWing(){ System.out.print(“烤了鸡翅膀～”); }
+		}
+		class Client{
+			public static void main(String[] args){
+				Barbecuer boss = new Barbecuer();
+				boss.backMutton();
+				boss.backMutton();
+				boss.backChickenWing();
+				boss.backMutton();
+			}
+		}
+		好了，现在问题来了：人多了，烧烤的人需要处理谁先谁后问题，
+		如果谁对出来的烧烤结果不满意，可能要重新烤，或者有人要取消订单
+		这些所有东西都需要烧烤的人去处理，这时候烧烤人这个类的功能就变得很冗杂了
+		维护起来自然就不方便，所以我们要进行解耦！
+	     b.于是路边的烧烤 —> 烧烤店
+		烧烤店多了一个服务员，服务员负责处理除了烧烤以外的问题
+		具体的实现也就是我们说的命令模式！
+		首先我们把客户的要求抽象成命令类
+			public abstract class Command{
+				protected Barbecuer receiver;
+				public Command(Barbecuer receiver){
+					this.receiver = receiver;
+				}
+				public abstract void ExecuteCommand();
+			}
+			这个命令类啊，持有了一个烧烤人的引用，我个人感觉觉得是不应该有的
+			感觉既然有了服务员，不应该把烧烤人暴露给客户端
+			不过命令类不持有烧烤人了话，执行命令就无法执行了，
+			后面我们再想想有没有别的办法解决一下
+		然后写具体的命令类：
+			public class BakeMuttonCommand extends Command{
+				public BakeMutton(Barbecuer receiver){
+					super(receiver);
+				}
+
+				public void ExecuteCommand(){
+					receiver.bakeMutton();   //让烧烤人去烤羊肉
+				}
+			}
+			public class BakeChickenWingCommand extends Command{
+				public BakeChickenWingCommand(Barbecuer receiver){
+					super( receiver );
+				}
+				public void ExecuteCommand(){
+					receiver.bakeChickenWing();
+				}
+			}
+		那命令类写好啦，现在把烧烤人的类写了：
+			class Barbecuer{
+				public void bakeMutton(){	System.out.print(“烤了串羊肉～”);		}
+				public void bakeChickenWing(){ System.out.print(“烤了鸡翅膀～”); }
+			}	
+		然后到最关键的服务员类：
+			public class Waiter{
+				private List<Command> orders = new ArrayList<>();
+				public void setOrder(Command command){
+					if(command.toString().equals(“烤个茄子”)){
+						System.out.println(“没有茄子呢～”);
+					}else{
+						orders.add(command);
+						System.out.println(“新订单：”+command.toString()
+							+ “时间为 ：” + DateTime.now.toString());
+					}
+				}
+				public void cancelOrder(Command command){
+					orders.remove(command);
+					System.out.println(“取消订单：”+command.toString()
+							+ “时间为 ：” + DateTime.now.toString());
+				}
+
+				public void Notify(){
+					for(Command cmd : orders)
+						cmd.ExecuteCommand();
+				}
+			} 
+			就把对订单事务的处理都交给了服务员，但是这样写现在其实还不太对
+			服务员应该记录一下，那个客户持有客人对象，不然大家对订单都写在一块
+			没有区分哪里行呢，所以list改成map，把command和客人绑定在一起
+		从上面的整个实现，我们就实现了请求者和执行者的解耦
+		现在又有新的问题啦，无论是烧烤还是烧烤店，如果现在菜品增加，
+		多了个烤牛肉串，那需要新增一个命令类，然后厨师类也要修改
+		违背了开闭原则啦，不过这个确实也没办法的，
+		本来命令模式就不是解决这个问题的
+3.命令模式的作用：
+	A.它比较容易设计一个命令队列
+	B.在需要的情况下，可以较容易地将命令记入日志
+	C.允许接收请求的一方决定是否要否决请求
+	D.可以比较容易地实现对请求对撤销和重做
+	E.由于加新的具体命令类不影响其他的类，因此增加新的具体命令也比较容易
+4.敏捷开发原则告诉我们，不要为代码添加基于猜测的，实际不需要的功能。如果不清楚一个
+	系统是否需要命令模式，一般就不要急着去实现它，事实上，在需要的时候通过重构实现
+	这个模式并不困难，只有在真正需要入撤销/恢复操作等功能时，把原来的代码重构为
+	命令模式才有意义。	

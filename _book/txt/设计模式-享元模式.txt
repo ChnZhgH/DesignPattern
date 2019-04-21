@@ -1,0 +1,60 @@
+1.享元模式：运用共享技术有效得支持大量细粒度的对象。
+2.享元模式的理解：
+	A.想想字符串常量池就明白了
+	B.就是建立一个哈希表，然后已经存在的类对象，如果相同的，就不要再new新的了
+3.享元模式的实现：
+	A.首先我们写一个享元工厂，这个工厂就是用来建立哈希表的啦
+		class FlyweightFactory{
+			private HashMap<String,Flyweight> map = new HashMap<>();
+			//其中Flyweight是可以共享的实现类，
+			//书中用的是抽象类，我觉得接口比较合适
+			public FlyweightFactory(){
+				map.add(“X”,new ConcreteFlyweight1());
+				map.add(“Y”,new ConcreteFlyweight2());
+				map.add(“Z”,new ConcreteFlyweight3());
+				//把要共享的类先加入map，可以不用现在就new的
+				//当查找key为X找不到时候，再new也不迟
+				//改也很简单，构造方法不要了，
+				//然后getFlyweight方法加一个判断是否为空		
+			}
+			public Flyweight getFlyweight(String key){
+				return map.get(key);  
+				//上面说的就是这里，如果不存在就new一个存进去
+				//if(!map.containKey(key)){
+				//	这里需要根据key对具体值去new对应对象
+				//	如果对象多了话，就有很多if或者switch-case结构
+				//	这时候立马就想到，用简单工厂+反射+配置文件来实现！	
+				//} 
+			}
+		}
+	B.然后写Flyweight接口啦：
+		interface Flyweight{
+			public abstract void Operation(int extrinsicState);
+			//传入的是代码外部状态，什么意思呢，就是比如hashmap存了一个对象
+			//但是这个对象啊，我有些参数和它的不一样，那这时候我通过这个方法
+			//把不一样的参数传进来，对这个对象进行修改了再使用
+		}
+	C.然后写Flyweight实现类：
+		实现了Flyweight不一定就表示要共享，也可以不共享
+		所以理论上还会写一个不共享类
+		class ConcreteFlyweight1{
+			public void Operation(int extrinsicState){
+				System.out.println(“具体Flyweight：”+ Integer.toString(extrinsicState));
+			}
+		}
+		class ConcreteFlyweight2{...}	
+		class ConcreteFlyweight3{...}
+	D.最后就是客户端代码啦：
+		class Demo{
+			public static void main(String[] args){
+				int extrinsicState = 22;
+				FlyweightFactory f = new FlyweightFactory();
+				Flyweight fx = f.getFlyweight(“X”);
+				fx.operation(extrinsicState);
+				//获取到了对象，然后修改成自己需要的参数
+			}	
+		}
+4.享元模式应用场景：
+	如果一个应用程序使用了大量的对象，而大量的这些对象造成了很多的存储开销时应该
+	考虑使用；还有当重复或者类似的对象比较多的时候，考虑使用享元模式，去共享这些
+	对象。

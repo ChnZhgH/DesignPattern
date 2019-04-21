@@ -1,0 +1,70 @@
+//这个是以前写的，有待更新
+1.动态代理:
+	A.生成代理对象：
+		Object proxyObject = Proxy.newProxyInstance(ClassLoader classLoader, 
+				Class[] interfaces, InvocationHandler h);
+		a.作用：动态创建实现了interfaces数组中所指定的实现类对象
+					比如我要创建一个对象，这个对象要实现A,B两个接口，方法有二：
+						1、写个类C，然后实现这两个接口，
+						2、通过动态代理，直接生成实现了这两个接口的对象
+		b.参数：	ClassLoader：类加载器，选择一个类加载器把.class文件加载到内存，
+						       这里是加载出一个代理对象到内存
+				Class[] interfaces：指定要实现的接口们
+				InvacationHandler:代理对象的所有方法(native方法不执行,hashCode例外)
+							     都会调用InvacationHandler的invoke()方法
+	B.实现InvocationHandler接口
+		public Object invoke(Object proxy, Method method, Object[] args);		
+		a.实现InvocationHandler接口，重写invoke方法
+		b.在调用代理对象所实现接口中的方法时被调用
+		c.参数：Object proxy：当前对象，即A中生成的代理对象！表示在调用谁的方法！
+				Method method：当前被调用的方法(目标方法)
+				Object[] args：被调用方法的参数值
+	C.具体实现：
+		(下面这个是基础版，因为下面这段代理的对象是可变的，可是代理的内容是不可变)
+		public class Demo{
+			public static void main(String[] args){
+				Waiter waiter = new Waiter();
+				
+				ClassLoader classLoader = this.getClass().getClassLoader();
+				Class[] interfaces = {Waiter.class};
+				InvacationHandler invocationHandler = new WaiterInvacationHandler(waiter);
+				Waiter waiterproxy = (Waiter) Proxy.newProxyInstance(classLoader, 
+												interfaces, invocationHandler);
+				waiterproxy.serve();
+				
+			}
+			
+		}
+				
+		class WaiterInvacationHandler implements InvacationHandler{
+			Private Waiter waiter;
+			public WaiterInvacationHandler(Waiter waiter){
+				this.waiter = waiter
+			}
+			public Object invoke(Object proxy, Method method, Object[] args) throw Throwable{
+				system.out.println("您好！");
+				this.waiter.serve();
+				system.out.println("再见！");
+				return null;
+			}
+		}
+		
+		interfaces Waiter{
+			public void serve();
+		}
+	D.具体实现解析：
+		生成的代理对象，在调用方法时，会自动的去调用InvacationHandler中的invoke方法
+	E.比较几个增强对象的手段：
+		a.继承
+			被增强的对象不能变
+			增强的内容不能变
+		b.装饰者模式
+			被增强的对象可变
+			增强的内容不可变，
+				比如BufferedInputStream(InputStream i)给任何传进来的输入流加缓冲区
+		c.动态代理
+			被增强的对象可变
+			增强的内容可变：使用动态代理工厂，可以在生成代理对象的时候，
+						    决定invoke方法中要加入的内容
+	F.动态工厂代理：
+		参见广陵散-day28 动态代理之代理工厂实现

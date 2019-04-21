@@ -1,0 +1,109 @@
+1.策略模式：
+	A.它定义了算法家族，分别封装起来，让它们之间可以相互替换，此模式让算法的变化，
+	   不会影响到使用算法的用户
+	B.实际上就是说，当策略变化了，让客户端的代码可以不用修改
+2.策略模式的理解：
+	A.用一个例子来理解：
+		比如商场的折扣活动，可能打八折，可能满300减100，
+		结算的时候我们需要根据折扣活动进行相应的折算，现在当折扣的活动变化
+		我们希望客户端的代码可以不改动
+	B.具体实现：
+		a.面向过程的思路就是，在客户端加switch，然后判断是哪种折扣活动
+			然后对应折算价格，但是一旦折扣活动变化，比如买两件减50，
+			就需要修改客户端代码，而且活动前改一次，活动完了还要改回来！
+		b.那首先需要面向对象，并且依赖抽象(依赖倒转原则)
+			abstract class CashSuper{
+				public abstract double acceptCash(double money);
+			}
+
+			class CashNormal extends CashSuper{ //正常收费类
+				public double acceptCash(double money){
+					return money;
+				}
+			}
+			class CashRebate extends CashSuper{ //折扣收费类
+				private double moneyRebate = 1.0;
+				public CashRebate(double moneyRebate){
+					this.moneyRebate = moneyRebate;
+				}
+				public double acceptCash(double money){
+					return money * moneyRebate;
+				}
+			}
+			class CashReturn extends CashSuper{
+				private double moneyCondition = 0;
+				private double moneyReturn = 0;
+				//满moneyCondition减moneyReturn
+				public CashReturn(double moneyCondition, double moneyReturn){
+					this.moneyCondition = moneyCondition; 
+					this.moneyReturn = moneyReturn;
+				}
+				public double acceptCash(double money){
+					double result = money;
+					if(money >= moneyCondition){
+						result = money-Math.floor(money/moneyCondition)*moneyReturn;
+					return result;
+					}
+				}
+			}
+		c.到目前为止，客户端还是无法避免去new一个具体的收费方式
+			所以会想到两个方法：
+			(1)想到用一个简单工厂，客户端传入什么折扣方式，
+				我就new哪种收费方式，然后返回CashSuper
+				首先肯定这个思路是可行的，而且和策略模式很相似了
+				不过老问题，还是存在用switch，修改起来头疼，可以用反射来解决：
+				class CashFactory{
+					public static CashSuper createCashAccept(String type){
+						Properties properties = new Properties();
+						InputStream in = CashFactory.class.getClassLoader()
+							.getResourceAsStream(“strategy.properties”);
+						properties.load(in);
+						String className = properties.getProperty(type);
+						Class c = Class.getClass(className);
+						return (CashSuper)c.newInstance();
+						//注意：写成反射形式了话，我们现在不输入参数，所以！
+						//每个具体的策略类都必须提供无参构造，前面那样写是不行的！
+					}
+				}
+			(2)用策略模式，其实和简单工厂很像，简单工厂最后还是给客户端返回
+				了一个CashSuper，策略模式连对象都不返了
+				class CashContext{
+					private CashSuper cs = null;
+					public CashContext(String type){
+						Properties properties = new Properties();
+						InputStream in = CashFactory.class.getClassLoader()
+							.getResourceAsStream(“strategy.properties”);
+						properties.load(in);
+						String className = properties.getProperty(type);
+						Class c = Class.getClass(className);
+						cs = (CashSuper)c.newInstance();
+						//注意：写成反射形式了话，我们现在不输入参数，所以！
+						//	每个具体的策略类都必须提供无参构造，前面那样写是不行的！
+					}
+
+					public double getResult(double money){
+						return cs.acceptCash(money);
+					}
+				}
+				这样的形式，把客户端和具体的收费算法彻底隔离开了
+				客户端只认识CashContext类，耦合度更低
+				简单工厂客户端认识CashSuper和Factory两个类
+		d.客户端实现：
+			(1)如果是简单工厂：
+				class Demo {
+					public static void main(String[] args){
+						double money = 10000; //假设一下，一般是输入的
+						CashSuper cash = Factory.createCashAccept(“正常收费”);
+						double res = ash.acceptCash(money);
+						System.out.println(res);
+					}
+				}
+			(2)如果是策略模式：
+				class Demo {
+					public static void main(String[] args){
+						double money = 10000; //假设一下，一般是输入的
+						CashContext cash = new CashContext(“正常收费”);
+						double res = cash.getResult(money);
+						System.out.println(res);
+					}
+				}

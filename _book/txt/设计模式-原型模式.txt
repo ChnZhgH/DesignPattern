@@ -1,0 +1,62 @@
+1.原型模式：用原型实例指定创建对象的种类，并且通过拷贝这些原型创建新的对象
+2.原型模式实际上讲的就是克隆
+3.克隆分为深克隆和浅克隆：
+	A.浅克隆在java中就是重写了clone方法，克隆出来的对象是两个不一样的对象
+	    表现为指向的内存地址不同。
+	    但是！浅克隆不能克隆当前类中引用类型（比如引用对象，String，数组等）
+	    也就是说，被克隆的这个类中的引用类型仍然指向的还是同一个类型
+	B.深克隆就是在上面的基础上，把类中的引用类型也克隆了
+	    那么类中引用类对象，类中又引用类对象，究竟克隆几层呢，这就看自己情况决定了
+	    在java中，实现的方法还是重写clone方法，只不过clone了以后
+	    克隆对象还要的成员还要再被clone一次
+	    例子：
+	    	Class Body implements Cloneable{
+			public Head head;
+			public Body(){}
+			public Body(Head head){ this.head = head; }
+			@override
+			protected Object clone() throws CloneNotSupportedException{
+				//return super.clone();
+				Body newbody = (Body) super.clone();
+				newbody.head = (Head) head.clone(); 
+				return newbody;
+			}
+		}
+
+		Class Head implements Cloneable{
+			public Face face;
+			public Head(){}
+			public Head( Face face ){ this.face = face; }
+			@override
+			protected Object clone() throws CloneNotSupportedException{
+				return super.clone();
+			}
+		}
+
+		class Test {
+			public static void main(String[] args){
+				Body body = new Body(new Head());
+				Body newbody = body.clone();
+				System.out.println(body == newbody);  // false
+				System.out.println(body.head == newbody.head);  // false
+				System.out.println(body.head.face == newbody.head.face); //true
+			}
+		}		
+
+		以上就是一个一层深拷贝，只拷贝到了head，但是head往下的引用类型还是相同的
+4.一般来说，copy()指的是深拷贝，而 clone()指的是浅拷贝
+5.比较clone方法和new对象：
+	结论：clone方法可以更高效率获得一个相同的对象
+	A.new的步骤：（存在指令重排序，所以顺序可能有变化）
+		a.分配一块内存区域
+		b.把内存引用传递出去
+		c.初始化这块内存(调用构造函数，初始化/填充各个域)
+		d.按照原对象对各个进行写入，写一个一样对象出来
+	B.clone步骤：
+		a.分配一块内存区域，结构自然和原对象相同
+		b.直接把原对象各个域的拷贝过来(如果是深克隆，那就还有分配过程)
+		c.把内存的引用传递出去
+6.原型模式的应用：
+	比如报表，每次报表给出的都是空表，如果有很多部分其实每次填基本都是相同的
+	那客户就整天在重复填入，这时候利用原型模式，在填写完一份报表后，提交作为原型
+	下次生成新的报表就采用clone方式，获得一个拷贝体
